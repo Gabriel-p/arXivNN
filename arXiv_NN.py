@@ -27,7 +27,7 @@ def main(
     # Get latest submissions to arXiv
     articles = get_arxiv_new(categ, subcategs)
 
-    # Load file with classified data. Should have two columns names 'class' and
+    # Load file with classified data. Should have two columns named 'class' and
     # 'abstract' with as many rows as desired. The first column stores the labels
     # from 1 to 4, the second one stores the text.
     df_class = pd.read_csv("classifier_NN.csv")
