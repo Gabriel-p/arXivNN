@@ -27,13 +27,15 @@ def main(
     # Get latest submissions to arXiv
     articles = get_arxiv_new(categ, subcategs)
 
-    # Load file with classified data
+    # Load file with classified data. Should have two columns names 'class' and
+    # 'abstract' with as many rows as desired. The first column stores the labels
+    # from 1 to 4, the second one stores the text.
     df_class = pd.read_csv("classifier_NN.csv")
 
     # Train NN
     vectorizer, model = train_NN(num_classes, max_features, df_class)
 
-    # Predict labels and store
+    # Predict labels and update 'df_class' if required
     predict_label(articles, df_class, vectorizer, model)
 
 
