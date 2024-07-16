@@ -18,25 +18,63 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 def main(
-    categ="astro-ph",
-    subcategs=("astro-ph.GA", "astro-ph.IM"),
-    num_classes=4,
-    max_features=1000
-):
-    """ """
+    categ: str = "astro-ph",
+    subcategs: tuple = ("astro-ph.GA", "astro-ph.IM"),
+    num_classes: int = 4,
+    max_features: int = 1000,
+    verb: int = 0,
+) -> None:
+    """
+    Main function to process and classify arXiv submissions using a Neural Network.
+
+    This function performs the following steps:
+    1. Retrieves the latest submissions from arXiv for the specified category and
+       subcategories.
+    2. Loads pre-classified data from a CSV file.
+    3. Trains a Neural Network classifier.
+    4. Predicts labels for the new arXiv submissions and updates the classification
+       dataset if required.
+
+    Parameters:
+    -----------
+    categ : str, optional
+        The main arXiv category to fetch articles from (default is "astro-ph").
+    subcategs : tuple of str, optional
+        Subcategories within the main category to consider (default is
+        ("astro-ph.GA", "astro-ph.IM")).
+    num_classes : int, optional
+        The number of classes for classification (default is 4).
+    max_features : int, optional
+        The maximum number of features to use in the text vectorization
+        (default is 1000).
+    verb : int, optional
+        Verbosity level for the training process (default is 0, which means no verbose
+        output).
+
+    Returns:
+    --------
+    None
+
+    Notes:
+    ------
+    - The function expects a CSV file named 'labels_text.csv' in the current directory.
+      This file should contain two columns: 'label' (integers from 1 to 4) and 'text'.
+    - The function modifies the 'df_class' DataFrame in-place with new predictions.
+    """
+
     # Get latest submissions to arXiv
     articles = get_arxiv_new(categ, subcategs)
 
-    # Load file with classified data. Should have two columns named 'class' and
-    # 'abstract' with as many rows as desired. The first column stores the labels
+    # Load file with classified data. Should have two columns named 'label' and
+    # 'text' with as many rows as desired. The first column stores the labels
     # from 1 to 4, the second one stores the text.
-    df_class = pd.read_csv("classifier_NN.csv")
+    df_class = pd.read_csv("labels_text.csv")
 
     # Train NN
-    vectorizer, model = train_NN(num_classes, max_features, df_class)
+    vectorizer, model = train_NN(num_classes, max_features, df_class, verb)
 
     # Predict labels and update 'df_class' if required
-    predict_label(articles, df_class, vectorizer, model)
+    predict_label(articles, df_class, vectorizer, model, verb)
 
 
 def get_arxiv_new(categ, subcategs):
@@ -48,7 +86,7 @@ def get_arxiv_new(categ, subcategs):
     subcategs = [_.lower() for _ in subcategs]
 
     # Download new articles from arXiv.
-    print("Downloading latest arXiv data.")
+    print(f"Downloading new arXiv {categ} submissions for sub-categories {subcategs}")
     url = "http://arxiv.org/list/" + categ + "/new"
     html = requests.get(url)
     soup = BS(html.content, features="xml")
@@ -100,11 +138,15 @@ def preprocess_text(texts):
     5. Applies stemming to reduce words to their root form.
 
     Parameters:
-    texts (list of str): A list of text strings to be preprocessed.
+    -----------
+    texts : list of str
+        A list of text strings to be preprocessed.
 
     Returns:
-    list of str: A list of preprocessed text strings, where each string contains
-                 space-separated preprocessed tokens.
+    --------
+    preprocessed_texts : list of str
+        A list of preprocessed text strings, where each string contains
+        space-separated preprocessed tokens.
 
     Dependencies:
     - re: For regular expression operations.
@@ -147,7 +189,7 @@ def preprocess_text(texts):
     return preprocessed_texts
 
 
-def train_NN(num_classes, max_features, df):
+def train_NN(num_classes, max_features, df, verb):
     """
     Train a neural network classifier on text data.
 
@@ -161,13 +203,19 @@ def train_NN(num_classes, max_features, df):
     6. Evaluates the model on the test set.
 
     Parameters:
-    num_classes (int): The number of classes for classification.
-    max_features (int): The maximum number of features to use in the TF-IDF vectorizer.
-    df (pandas.DataFrame): A DataFrame containing 'abstract' (text) and 'class'
-    (label) columns.
+    -----------
+    num_classes : int
+        The number of classes for classification.
+    max_features : int
+        The maximum number of features to use in the TF-IDF vectorizer.
+    df : pandas.DataFrame)
+        A DataFrame containing 'text' and 'label' columns.
+    verb : int
+        Verbosity level for model predictions.
 
     Returns:
-    tuple: A tuple containing two elements:
+    --------
+    A tuple containing two elements:
         - vectorizer (TfidfVectorizer): The fitted TF-IDF vectorizer.
         - model (keras.Sequential): The trained neural network model.
 
@@ -191,10 +239,10 @@ def train_NN(num_classes, max_features, df):
 
     Example:
     >>> df = pd.DataFrame({'abstract': ['text1', 'text2'], 'class': [1, 2]})
-    >>> vectorizer, model = train_NN(num_classes=2, max_features=1000, df=df)
+    >>> vectorizer, model = train_NN(num_classes=2, max_features=1000, df=df, verb=0)
     """
-    texts = df['abstract'].values
-    labels = df['class'].values
+    texts = df['text'].values
+    labels = df['label'].values
     # Preprocess texts
     preprocessed_texts = preprocess_text(texts)
 
@@ -226,17 +274,17 @@ def train_NN(num_classes, max_features, df):
 
     # Train the model
     model.fit(
-        X_train, y_train, epochs=100, batch_size=32, validation_split=0.2, verbose=1
+        X_train, y_train, epochs=100, batch_size=32, validation_split=0.2, verbose=verb
     )
 
     # Evaluate the model
-    loss, accuracy = model.evaluate(X_test, y_test, verbose=0)
+    loss, accuracy = model.evaluate(X_test, y_test, verbose=verb)
     print(f"Test accuracy: {accuracy:.4f}")
 
     return vectorizer, model
 
 
-def predict_label(articles, df, vectorizer, model, verb=0):
+def predict_label(articles, df, vectorizer, model, verb):
     """
     Predict labels for new articles, display results, and update a classification
     file based on user input.
@@ -246,19 +294,26 @@ def predict_label(articles, df, vectorizer, model, verb=0):
     modify the predictions. The updated data is then saved to a CSV file.
 
     Parameters:
-    df (pandas.DataFrame): The existing DataFrame containing classified articles.
-    articles (list of tuple): A list of articles, where each article is a tuple
-    containing (title, abstract, url).
-    vectorizer: The text vectorizer used to transform the preprocessed text.
-    model: The pre-trained classification model used for predictions.
-    verb (int, optional): Verbosity level for model predictions. Defaults to 0.
+    -----------
+    df : pandas.DataFrame
+        The existing DataFrame containing classified articles.
+    articles : list of tuple
+        A list of articles, where each article is a tuple containing
+        (title, abstract, url).
+    vectorizer : TfidfVectorizer
+        The text vectorizer used to transform the preprocessed text.
+    model :keras.Sequential
+        The pre-trained classification model used for predictions.
+    verb : int
+        Verbosity level for model predictions.
 
     Returns:
+    -------
     None
 
     Side Effects:
     - Prints prediction results and article information to the console.
-    - Updates the "classifier_NN.csv" file with new classifications.
+    - Updates the "labels_text.csv" file with new classifications.
     - Modifies the input DataFrame 'df' with new entries.
 
     The function includes a nested function 'classif' which:
@@ -278,7 +333,7 @@ def predict_label(articles, df, vectorizer, model, verb=0):
 
     Note:
     - Requires 'preprocess_text' function to be defined.
-    - Assumes the existence of a "classifier_NN.csv" file for saving results.
+    - Assumes the existence of a "labels_text.csv" file for saving results.
     - The classification labels are assumed to start from 1, not 0.
 
     Dependencies:
@@ -289,7 +344,7 @@ def predict_label(articles, df, vectorizer, model, verb=0):
     Example:
     >>> df = pd.DataFrame(columns=['class', 'abstract'])
     >>> articles = [("Title 1", "Abstract 1", "url1"), ("Title 2", "Abstract 2", "url2")]
-    >>> predict_label(df, articles, my_vectorizer, my_model)
+    >>> predict_label(df, articles, my_vectorizer, my_model, verb)
     """
     def classif(text):
         preprocessed_text = preprocess_text([text])
@@ -304,12 +359,32 @@ def predict_label(articles, df, vectorizer, model, verb=0):
     i_sort = np.argsort(predicted_labels)
 
     print("\n")
+    all_labels = list(set(predicted_labels))
+    for N_label in all_labels:
+        NX = (np.array(predicted_labels) == N_label).sum()
+        print(f"Articles labeled {N_label}: {NX}")
+
+    print(
+        "\nAccepted user inputs:\n"
+        + "q      : quit,\n"
+        + "c      : continue without storing,\n"
+        + "Return : store predicted label,\n"
+        + "{int}  : store this integer as label"
+    )
+
     for i in i_sort:
+        print("\n")
         title, abstract, art_url = articles[i]
         print(f"* Predicted label: {predicted_labels[i]}; {art_url}")
         print("# " + title + "\n")
         print(textwrap.fill(abstract, width=80))
-        user_input = input("(q to quit, c to continue, any other value to store): ")
+        while True:
+            user_input = input("> (q, c, Return, {int}): ")
+            if user_input == 'q' or user_input == 'c' or user_input == '' \
+                    or type(user_input) is int:
+                break
+            else:
+                print("Unrecognized input. Try again")
         if user_input.lower() == 'q':
             print("\nQuitting")
             return
@@ -324,9 +399,9 @@ def predict_label(articles, df, vectorizer, model, verb=0):
             print(f"Add '{train}' to classification file")
 
             # Update file
-            row = {'class': train, 'abstract': title + ' ' + abstract}
+            row = {'label': train, 'text': title + ' ' + abstract}
             df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
-            df.to_csv("classifier_NN.csv", index=False)
+            df.to_csv("labels_text.csv", index=False)
 
 
 if __name__ == "__main__":
