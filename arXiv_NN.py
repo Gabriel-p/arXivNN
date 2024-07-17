@@ -20,7 +20,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 def main(
     categ: str = "astro-ph",
     subcategs: tuple = ("astro-ph.GA", "astro-ph.IM"),
-    num_classes: int = 4,
     max_features: int = 1000,
     verb: int = 0,
 ) -> None:
@@ -42,8 +41,6 @@ def main(
     subcategs : tuple of str, optional
         Subcategories within the main category to consider (default is
         ("astro-ph.GA", "astro-ph.IM")).
-    num_classes : int, optional
-        The number of classes for classification (default is 4).
     max_features : int, optional
         The maximum number of features to use in the text vectorization
         (default is 1000).
@@ -58,7 +55,7 @@ def main(
     Notes:
     ------
     - The function expects a CSV file named 'labels_text.csv' in the current directory.
-      This file should contain two columns: 'label' (integers from 1 to 4) and 'text'.
+      This file should contain two columns: 'label' and 'text'.
     - The function modifies the 'df_class' DataFrame in-place with new predictions.
     """
 
@@ -66,9 +63,11 @@ def main(
     articles = get_arxiv_new(categ, subcategs)
 
     # Load file with classified data. Should have two columns named 'label' and
-    # 'text' with as many rows as desired. The first column stores the labels
-    # from 1 to 4, the second one stores the text.
+    # 'text' with as many rows as desired. The first column stores the labels,
+    # the second one stores the text.
     df_class = pd.read_csv("labels_text.csv")
+    # Extract number of labels from input file
+    num_classes = int(max(set(df_class['label'])))
 
     # Train NN
     vectorizer, model = train_NN(num_classes, max_features, df_class, verb)
