@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "arXivNN"
+version = "0.0.1"
+description = "Neural network classifier of arXiv's new submissions"
+authors = ["Gabriel I Perren <gabrielperren@gmail.com>"]
+readme = "README.md"
+license = "MIT"
+keywords = ["arxiv", "neural-network"]
+repository = "https://github.com/Gabriel-p/arXivNN"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests-cache = "^1.2.1"
+beautifulsoup4 = "^4.12.3"
+python-dateutil = "^2.9.0.post0"
+numpy = "^1.26.4"
+pandas = "^2.2.2"
+keras = "^3.4.1"
+tensorflow = "^2.17.0"
+nltk = "^3.8.1"
+scikit-learn = "^1.5.1"
+lxml = "^5.2.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

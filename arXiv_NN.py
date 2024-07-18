@@ -226,6 +226,7 @@ def get_soup(categ: str) -> bs4.BeautifulSoup:
     def inner_soup():
         session = requests_cache.CachedSession(cache_name)
         response = session.get(url)
+        # response = requests.get(url)
         return bs4.BeautifulSoup(response.content, features="xml")
 
     # Get cached version if it exists, or cache a new one
