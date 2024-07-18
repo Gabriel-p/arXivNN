@@ -467,7 +467,7 @@ def train_NN(
     """
     print(f"Training NN: num_classes={num_classes}, max_features={max_features}")
 
-    texts = df['text'].values
+    texts = list(df['text'].values)
     labels = df['label'].values
     # Preprocess texts
     preprocessed_texts = preprocess_text(texts)
