@@ -1,6 +1,6 @@
 <div align="center">
   <br>
-  <img src="arxivNN.png" alt="UCC" width="300"/>
+  <img src="arxivNN.png" alt="UCC" width="500"/>
   <br>
 </div>
 
