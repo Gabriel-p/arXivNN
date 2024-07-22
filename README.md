@@ -1,7 +1,18 @@
-# arXivNN
+<div align="center">
+  <br>
+  <img src="arxivNN.png" alt="UCC" width="200"/>
+  <br>
+</div>
 
-Simple neural network classifier of arXiv's new submissions
+**arxiv-NN** is a simple neural network classifier of arXiv's new submissions
 (e.g.: https://arxiv.org/list/astro-ph/new).
+
+# TODO
+
+- [ ] Run as application, not script
+- [ ] Allow no input file (create one from scratch)
+- [ ] Use rich print for better visualization
+
 
 Usage:
 
